@@ -8,7 +8,6 @@ const formStatus = document.getElementById("form-status");
 
 const modeSelect = document.getElementById("form-mode");
 const modeDescription = document.getElementById("mode-description");
-const startButton = document.getElementById("start-trial");
 const resetButton = document.getElementById("reset-trial");
 const trialStatus = document.getElementById("trial-status");
 
@@ -48,10 +47,10 @@ let trialStartTime = null;
 let trialActive = false;
 let interruptionPerformed = false;
 let trialMetrics = null;
-
-
+let trialSnapshot = {};
 
 interruptButton.disabled = true;
+
 trialStatus.textContent =
     "Select a form mode and begin entering your information to start a trial.";
 
@@ -98,7 +97,7 @@ function updateProgress() {
 }
 
 
-// Stop all autosaving timers.
+// Stop all auto-saving timers.
 function stopAutoSaving() {
     if (saveTimeout !== null) {
         clearTimeout(saveTimeout);
@@ -112,7 +111,7 @@ function stopAutoSaving() {
 }
 
 
-// Read the saved form data.
+// Read saved form data.
 function getStoredFormData() {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -134,7 +133,7 @@ function getStoredFormData() {
 }
 
 
-// Save information only during an active autosaving trial.
+// Save information only during an active auto-saving trial.
 function saveFormData() {
     if (!trialActive || modeSelect.value !== "autosave") {
         return;
@@ -189,11 +188,12 @@ function restoreSavedData() {
     });
 
     updateProgress();
+
     return data;
 }
 
 
-// Save the active trial state.
+// Persist the active trial, including its field snapshot.
 function persistTrialState() {
     if (!trialActive) {
         return;
@@ -203,7 +203,8 @@ function persistTrialState() {
         mode: modeSelect.value,
         startTime: trialStartTime,
         interruptionPerformed: interruptionPerformed,
-        trialMetrics: trialMetrics
+        trialMetrics: trialMetrics,
+        snapshot: trialSnapshot
     };
 
     try {
@@ -235,11 +236,13 @@ function beginTrialAutomatically() {
         return;
     }
 
-    // Do not reset the form: preserve the information just entered.
     trialStartTime = Date.now();
     trialActive = true;
     interruptionPerformed = false;
     trialMetrics = null;
+
+    // Capture the information already entered.
+    trialSnapshot = getFormData();
 
     modeSelect.disabled = true;
     interruptButton.disabled = false;
@@ -298,7 +301,10 @@ function calculateRecovery(snapshot, mode) {
         const savedValue =
             String(savedData[fieldId] || "").trim();
 
-        if (mode === "autosave" && savedValue === originalValue) {
+        if (
+            mode === "autosave" &&
+            savedValue === originalValue
+        ) {
             recoveredCount++;
         }
     });
@@ -333,7 +339,7 @@ function displayRecoveryMetrics() {
 }
 
 
-// Simulate an interruption.
+// Record a simulated interruption.
 function simulateInterruption() {
     if (!trialActive) {
         recoverySummary.textContent =
@@ -347,17 +353,26 @@ function simulateInterruption() {
         return;
     }
 
-    // Flush any pending save before measuring what is recoverable.
+    // Flush any pending save before measuring recovery.
     if (saveTimeout !== null) {
         clearTimeout(saveTimeout);
         saveTimeout = null;
     }
 
-    const snapshot = getFormData();
+    // Capture the latest form values.
+    trialSnapshot = getFormData();
 
-    trialMetrics = calculateRecovery(snapshot, modeSelect.value);
+    // Ensure the latest entries are saved before comparing.
+    if (modeSelect.value === "autosave") {
+        saveFormData();
+    }
+
+    trialMetrics = calculateRecovery(
+        trialSnapshot,
+        modeSelect.value
+    );
+
     interruptionPerformed = true;
-
     persistTrialState();
 
     // Simulate loss of the current page's form contents.
@@ -381,7 +396,7 @@ function simulateInterruption() {
 }
 
 
-// Restore a trial after a refresh or browser reopening.
+// Resume an unfinished trial after a page reload or reopening.
 function resumeInterruptedTrial() {
     let state;
 
@@ -408,16 +423,30 @@ function resumeInterruptedTrial() {
 
     trialActive = true;
     trialStartTime = state.startTime;
+    trialSnapshot = state.snapshot || {};
     interruptionPerformed = Boolean(state.interruptionPerformed);
     trialMetrics = state.trialMetrics || null;
 
     modeSelect.value = state.mode;
     modeSelect.disabled = true;
-    interruptButton.disabled = interruptionPerformed;
 
     updateModeDescription();
 
-    // Ignore values restored by the browser itself.
+    // If no interruption was recorded before the page disappeared,
+    // measure recovery using the last persisted snapshot.
+    if (!interruptionPerformed) {
+        trialMetrics = calculateRecovery(
+            trialSnapshot,
+            state.mode
+        );
+
+        interruptionPerformed = true;
+        persistTrialState();
+    }
+
+    interruptButton.disabled = true;
+
+    // Remove browser-restored values before using app storage.
     form.reset();
 
     if (state.mode === "autosave") {
@@ -426,28 +455,15 @@ function resumeInterruptedTrial() {
         updateProgress();
     }
 
-    if (state.mode === "autosave" && !interruptionPerformed) {
-        saveInterval = setInterval(saveFormData, 2000);
-    }
+    displayRecoveryMetrics();
 
-    if (interruptionPerformed && trialMetrics) {
-        displayRecoveryMetrics();
+    formStatus.textContent =
+        state.mode === "autosave"
+            ? "Your interrupted trial has resumed. Review your recovered information."
+            : "Your interrupted conventional trial has resumed. Review the information that remains.";
 
-        formStatus.textContent =
-            "Your interrupted trial has resumed. Review the recovered information.";
-
-        trialStatus.textContent =
-            "Interrupted trial resumed. The timer is still running.";
-    } else {
-        recoverySummary.textContent =
-            "Trial resumed. Continue entering information and test recovery when ready.";
-
-        formStatus.textContent =
-            "Your trial has resumed. Continue filling in the form.";
-
-        trialStatus.textContent =
-            "Trial resumed. The timer continues until successful submission.";
-    }
+    trialStatus.textContent =
+        "Interruption detected when the trial resumed. The timer continues until submission.";
 
     updateProgress();
 }
@@ -527,8 +543,10 @@ function renderResults() {
         averageRecoveryElement.textContent = "0%";
         averageLostElement.textContent = "0";
         averageTimeElement.textContent = "0 seconds";
+
         modeComparisonElement.textContent =
             "Complete some trials to see the comparison.";
+
         return;
     }
 
@@ -577,11 +595,15 @@ function renderResults() {
             items.length + " completed trial(s); " +
             testedItems.length + " interruption test(s); " +
             "average recovery " +
-            (recovery === null ? "not tested" : Math.round(recovery) + "%") +
+            (recovery === null
+                ? "not tested"
+                : Math.round(recovery) + "%") +
             "; average fields lost " +
             (lost === null ? "not tested" : lost.toFixed(2)) +
             "; average completion time " +
-            (time === null ? "not available" : time.toFixed(1) + " seconds") +
+            (time === null
+                ? "not available"
+                : time.toFixed(1) + " seconds") +
             ".";
     }
 
@@ -603,8 +625,13 @@ function completeTrial() {
         return;
     }
 
-    // Ensure the latest typed values have been saved before completion.
+    // Save the latest values before completion.
     if (modeSelect.value === "autosave") {
+        if (saveTimeout !== null) {
+            clearTimeout(saveTimeout);
+            saveTimeout = null;
+        }
+
         saveFormData();
     }
 
@@ -612,7 +639,7 @@ function completeTrial() {
         (Date.now() - trialStartTime) / 1000
     );
 
-    // If no interruption occurred, do not invent recovery results.
+    // Do not invent recovery results if no interruption was measured.
     const recoveryRate = interruptionPerformed && trialMetrics
         ? trialMetrics.recoveryRate
         : null;
@@ -632,7 +659,10 @@ function completeTrial() {
     });
 
     try {
-        localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+        localStorage.setItem(
+            RESULTS_KEY,
+            JSON.stringify(results)
+        );
     } catch (error) {
         formStatus.textContent =
             "The browser could not save the experiment results.";
@@ -651,6 +681,7 @@ function completeTrial() {
     trialActive = false;
     interruptionPerformed = false;
     trialMetrics = null;
+    trialSnapshot = {};
     trialStartTime = null;
 
     modeSelect.disabled = false;
@@ -702,6 +733,7 @@ function resetTrial() {
     trialActive = false;
     interruptionPerformed = false;
     trialMetrics = null;
+    trialSnapshot = {};
     trialStartTime = null;
 
     modeSelect.disabled = false;
@@ -721,10 +753,15 @@ function resetTrial() {
 }
 
 
-// Start timing on the first user edit.
+// Start timing on the first user edit and preserve the snapshot.
 function handleFormChange() {
     if (!trialActive) {
         beginTrialAutomatically();
+    }
+
+    if (trialActive) {
+        trialSnapshot = getFormData();
+        persistTrialState();
     }
 
     updateProgress();
@@ -768,22 +805,30 @@ clearResultsButton.addEventListener("click", function () {
 });
 
 
-// Record an interruption when the page is leaving, if possible.
-// Browser shutdown events are not guaranteed to run every time.
+// Best-effort interruption recording when the page is leaving.
+// Mobile browsers are not guaranteed to fire this event.
 window.addEventListener("beforeunload", function () {
     if (!trialActive || interruptionPerformed) {
         return;
     }
 
-    const snapshot = getFormData();
-
-    // Flush pending autosaves before measuring recovery.
     if (saveTimeout !== null) {
         clearTimeout(saveTimeout);
         saveTimeout = null;
     }
 
-    trialMetrics = calculateRecovery(snapshot, modeSelect.value);
+    trialSnapshot = getFormData();
+
+    // Attempt to flush the latest autosaved values.
+    if (modeSelect.value === "autosave") {
+        saveFormData();
+    }
+
+    trialMetrics = calculateRecovery(
+        trialSnapshot,
+        modeSelect.value
+    );
+
     interruptionPerformed = true;
     persistTrialState();
 });
