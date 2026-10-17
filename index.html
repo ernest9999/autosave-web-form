@@ -1,0 +1,281 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUN | Application Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="university-brand">
+            <img src="run-logo.png"
+                 alt="Redeemer's University Logo"
+                 class="university-logo">
+            <div class="brand-text">
+                <h1>REDEEMER'S UNIVERSITY</h1>
+                <p>RUNNING WITH THE VISION</p>
+            </div>
+        </div>
+        <div class="header-actions">
+    <span class="portal-label">APPLICATION PORTAL</span>
+    
+<button
+    type="button"
+    id="theme-toggle"
+    class="theme-toggle"
+    aria-label="Switch to dark mode"
+    aria-pressed="false"
+>
+    <span class="theme-icon sun-icon" aria-hidden="true">☀</span>
+    <span class="theme-icon moon-icon" aria-hidden="true">☾</span>
+    <span class="theme-knob" aria-hidden="true"></span>
+</button>
+
+</div>
+    </header>
+
+    <main class="page-container">
+        <section class="welcome-section">
+            <p class="eyebrow">UNIVERSITY APPLICATION</p>
+            <h2>Student Application Form</h2>
+            <p>Enter your academic information to participate in the form recovery experiment.</p>
+        </section>
+
+        <section class="mode-panel">
+            <div>
+                <h3>Experiment Controls</h3>
+                <p>Choose a form mode before starting a test trial.</p>
+            </div>
+
+            <label for="form-mode">Select form mode</label>
+            <select id="form-mode">
+                <option value="conventional">Conventional Form</option>
+                <option value="autosave">Auto-Saving Form</option>
+            </select>
+
+            <p id="mode-description">
+                Conventional mode: entries are not saved automatically.
+            </p>
+
+            <div class="experiment-actions">
+    <button type="button" id="reset-trial" class="secondary-button">
+        Reset Experiment
+    </button>
+</div>
+
+            <p id="trial-status" aria-live="polite">No trial started.</p>
+        </section>
+
+        <section class="form-card">
+            <div class="form-heading">
+                <div>
+                    <h3>Applicant Information</h3>
+                    <p>Complete all nine (9) fields to continue.</p>
+                </div>
+                <span class="required-note">* Required</span>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-label">
+                    <span>Form completion</span>
+                    <span id="progress-text">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <form id="application-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name *</label>
+                        <input type="text" id="fullName" name="fullName"
+                               placeholder="Enter your full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email"
+                               placeholder="you@example.com" required>
+                    </div>
+
+                    
+<!-- Phone Number -->
+<div class="form-group">
+    <label for="phoneNumber">Phone Number <span>*</span></label>
+    <input
+        type="tel"
+        id="phoneNumber"
+        name="phoneNumber"
+        placeholder="Enter your phone number"
+        required
+    >
+</div>
+
+<!-- Matriculation Number -->
+<div class="form-group">
+    <label for="matricNumber">Matriculation Number <span>*</span></label>
+    <input
+        type="text"
+        id="matricNumber"
+        name="matricNumber"
+        placeholder="Enter your matriculation number"
+        required
+    >
+</div>
+
+<!-- Gender -->
+<div class="form-group">
+    <label for="gender">Gender <span>*</span></label>
+    <select id="gender" name="gender" required>
+        <option value="">Select gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+    </select>
+</div>
+
+
+                    <div class="form-group">
+                        <label for="department">Department *</label>
+                        <select id="department" name="department" required>
+                            <option value="">Select your department</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Accounting">Accounting</option>
+                            <option value="Business Administration">Business Administration</option>
+                            <option value="Economics">Economics</option>
+                            <option value="Mass Communication">Mass Communication</option>
+                            <option value="Law">Law</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="academicLevel">Academic Level *</label>
+                        <select id="academicLevel" name="academicLevel" required>
+                            <option value="">Select your academic level</option>
+                            <option value="100 Level">100 Level</option>
+                            <option value="200 Level">200 Level</option>
+                            <option value="300 Level">300 Level</option>
+                            <option value="400 Level">400 Level</option>
+                            <option value="500 Level">500 Level</option>
+                            <option value="Postgraduate">Postgraduate</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="admissionType">Admission Type *</label>
+                        <select id="admissionType" name="admissionType" required>
+                            <option value="">Select your admission type</option>
+                            <option value="UTME">UTME</option>
+                            <option value="Direct Entry">Direct Entry</option>
+                            <option value="Transfer">Transfer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="programme">Programme of Study *</label>
+                        <select id="programme" name="programme" required>
+                            <option value="">Select your programme</option>
+                            <option value="Undergraduate">Undergraduate</option>
+                            <option value="Postgraduate">Postgraduate</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-footer">
+                    <p id="form-status" aria-live="polite">
+                        Start a trial before entering information.
+                    </p>
+                    <button type="submit" id="submit-application">
+                        Submit Application
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section class="mode-panel interruption-panel">
+            <h3>Interruption Simulation</h3>
+            <p>
+                Enter some information, then simulate an unexpected interruption
+                to measure how much data can be recovered.
+            </p>
+            <button type="button" id="simulate-interruption">
+                Simulate Interruption
+            </button>
+            <div id="recovery-summary" aria-live="polite">
+                No interruption test has been performed.
+            </div>
+        </section>
+
+        <section class="form-card results-panel">
+            <div class="form-heading">
+                <div>
+                    <h3>Experiment Results</h3>
+                    <p>Results from completed interruption trials.</p>
+                </div>
+            </div>
+
+            <div class="results-table-wrapper">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Trial</th>
+                            <th>Mode</th>
+                            <th>Recovery Rate</th>
+                            <th>Lost Fields</th>
+                            <th>Completion Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <tr>
+                            <td colspan="5">No completed trials yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="statistics-panel">
+                <h4>Experiment Summary</h4>
+                <div class="statistics-grid">
+                    <div class="statistic-card">
+                        <p>Total Trials</p>
+                        <h3 id="total-trials">0</h3>
+                    </div>
+                    <div class="statistic-card">
+                        <p>Average Recovery Rate</p>
+                        <h3 id="average-recovery">0%</h3>
+                    </div>
+                    <div class="statistic-card">
+                        <p>Average Fields Lost</p>
+                        <h3 id="average-lost">0</h3>
+                    </div>
+                    <div class="statistic-card">
+                        <p>Average Completion Time</p>
+                        <h3 id="average-time">0 seconds</h3>
+                    </div>
+                </div>
+
+                <h4>Mode Comparison</h4>
+                <div id="mode-comparison">
+                    Complete some trials to see the comparison.
+                </div>
+            </div>
+
+            <button type="button" id="clear-results" class="secondary-button">
+                Clear Results
+            </button>
+        </section>
+
+        <footer class="page-footer">
+            <p>Redeemer's University · IFT 203 || Group 20</p>
+            <p>Academic prototype for an auto-saving form experiment.</p>
+        </footer>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
